@@ -1,6 +1,14 @@
 from fastapi import FastAPI
 from fastapi.params import Body
+from pydantic import BaseModel
+from typing import Optional
 app = FastAPI()
+
+class Post(BaseModel):
+    title: str
+    content: str
+    published: bool = True
+    rating: Optional[int] = None
  
 @app.get("/")  #/ is the root endpoint of the API
 def read_root():
@@ -11,6 +19,6 @@ def get_post():
     return {"message": "This is a GET request to the /post endpoint"}
 
 @app.post("/CreatePost")  #/CreatePost is the endpoint of the API
-def create_post(payLoad: dict = Body(...)):
-    print(payLoad)
-    return {"New_post":f"Title : {payLoad['title']}, Content: {payLoad['content']}"}
+def create_post(new_post: Post):
+    print(new_post.rating)
+    return {"New_post": f"Title : {new_post.title}, Content: {new_post.content}"}
