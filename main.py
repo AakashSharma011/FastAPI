@@ -1,10 +1,12 @@
+#Importing the required libraries
 from fastapi import FastAPI
 from fastapi.params import Body
 from pydantic import BaseModel
 from typing import Optional
-app = FastAPI()
 
-class Post(BaseModel):
+app = FastAPI() #Initializing the FastAPI app
+
+class Post(BaseModel): #Defining a Pydantic model for the Post data structure
     title: str
     content: str
     published: bool = True
