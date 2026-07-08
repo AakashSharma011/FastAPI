@@ -61,3 +61,14 @@ def delete_post(ID:int):
             raise HTTPException(status_code=status.HTTP_204_NO_CONTENT, detail=f"Post with ID {ID} has been deleted")
             
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Post with ID {ID} not found")
+
+
+#Update a specific post by ID
+@app.put("/post/{ID}")
+def update_post(ID:int, updated_post: Post):
+    for index, post in enumerate(My_posts):
+        if post["ID"] == ID:
+            My_posts[index] = updated_post.dict()
+            My_posts[index]["ID"] = ID  # Ensure the ID remains the same
+            raise HTTPException(status_code=status.HTTP_200_OK, detail=f"Post with ID {ID} has been updated")
+    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Post with ID {ID} not found")
