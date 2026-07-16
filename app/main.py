@@ -2,7 +2,7 @@
 # Import Required Libraries
 # ==================================================
 
-from fastapi import FastAPI, Response, status, HTTPException
+from fastapi import FastAPI, Response, status, HTTPException,Depends
 from fastapi.params import Body
 from pydantic import BaseModel
 from typing import Optional
@@ -10,13 +10,22 @@ from random import randrange
 import psycopg2
 from psycopg2.extras import RealDictCursor
 import time
+from sqlalchemy.orm import Session
+from . import models
+from .database import engine ,get_db
 
+# ==================================================
+# Create Database Tables
+# ================================================== 
+
+models.Base.metadata.create_all(bind=engine)
 
 # ==================================================
 # Initialize FastAPI Application
 # ==================================================
 
 app = FastAPI()
+
 
 
 # ==================================================
@@ -39,7 +48,7 @@ while True:
             host="localhost",
             database="fastapi",
             user="postgres",
-            password="Aakash@123",
+            password="Aakash123",
             cursor_factory=RealDictCursor,
         )
         cursor = conn.cursor()
@@ -61,6 +70,11 @@ while True:
 def read_root():
     return {"Hello": "World"}
 
+@app.get("/sqlalchemy")  # Root endpoint
+def test_posts(db: Session = Depends(get_db)): 
+    posts=db.query(models.Post).all()
+    return{"data " : posts}
+ 
 
 # ==================================================
 # Get All Posts
