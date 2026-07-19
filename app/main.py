@@ -62,11 +62,9 @@ def read_root():
 # ==================================================
 
 @app.get("/post")  # Fetch all posts
-def get_posts():
-    cursor.execute("SELECT * FROM posts")
-    post = cursor.fetchall()
-    print(post)
-    return {"data": post}
+def get_posts(db: Session = Depends(get_db)):
+    posts = db.query(models.Post).all()
+    return posts
 
     # return {"message": "This is a GET request to the /post endpoint"}
 
@@ -75,7 +73,7 @@ def get_posts():
 # Create New Post
 # ==================================================
 
-@app.post("/CreatePost")  # Create a new post
+@app.post("/CreatePost", response_model=schema.Post)  # Create a new post
 def create_post(Post: schema.PostCreate, db: Session = Depends(get_db)):
     # cursor.execute(
     #     "INSERT INTO posts (title, content, published) VALUES (%s, %s, %s) RETURNING *",
@@ -90,27 +88,17 @@ def create_post(Post: schema.PostCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(new_post)
 
-    return {"data": new_post}
+    return  new_post
 
     # return {"New_post": f"Title : {new_post.title}, Content: {new_post.content}"}
 
-
-# ==================================================
-# Get Latest Post
-# ==================================================
-
-@app.get("/post/lastest")  # Fetch the latest post
-def get_latest_post():
-    cursor.execute("SELECT * FROM posts ORDER BY id DESC LIMIT 1")
-    latest_post = cursor.fetchone()
-    return {"data": latest_post}
 
 
 # ==================================================
 # Get Post By ID
 # ==================================================
 
-@app.get("/post/{ID}")  # Fetch a post by its ID
+@app.get("/post/{ID}",response_model=schema.Post   )  # Fetch a post by its ID
 def get_post(ID: int, db: Session = Depends(get_db)):
     # cursor.execute("SELECT * FROM posts WHERE id = %s returning *", (str(ID),))
     # post = cursor.fetchone()
@@ -118,7 +106,7 @@ def get_post(ID: int, db: Session = Depends(get_db)):
     post = db.query(models.Post).filter(models.Post.id == ID).first()
 
     if post:
-        return {"data": post}
+        return  post
     else:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -154,7 +142,7 @@ def delete_post(ID: int, db: Session = Depends(get_db)):
 # Update Post
 # ==================================================
 
-@app.put("/post/{ID}")  # Update an existing post by its ID
+@app.put("/post/{ID}",response_model=schema.Post)  # Update an existing post by its ID
 def update_post(ID: int, updated_post: schema.PostCreate, db: Session = Depends(get_db)):
     # cursor.execute(
     #     "UPDATE posts SET title = %s, content = %s, published = %s WHERE id = %s returning *",
@@ -177,4 +165,4 @@ def update_post(ID: int, updated_post: schema.PostCreate, db: Session = Depends(
     db.commit()
     db.refresh(post)
 
-    return {"data": post}
+    return  post
