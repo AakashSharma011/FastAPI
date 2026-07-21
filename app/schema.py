@@ -2,7 +2,7 @@
 # Pydantic Schema
 # ==================================================
 
-from pydantic import BaseModel
+from pydantic import BaseModel , EmailStr
 from datetime import datetime
 
 
@@ -20,4 +20,16 @@ class Post(PostBase):
     class Config:
         orm_mode = True
 
+    
+class User(BaseModel):
+    email: EmailStr
+    password: str
+    
+class UserOut(BaseModel):
+    email: EmailStr
+    id: int
+    created_at: datetime
+    class Config:
+        orm_mode = True
+    
  

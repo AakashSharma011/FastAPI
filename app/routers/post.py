@@ -1,68 +1,16 @@
-# ==================================================
-# Import Required Libraries
-# ==================================================
-
-from fastapi import FastAPI, Response, status, HTTPException, Depends
-from fastapi.params import Body
-from typing import Optional
-from random import randrange
-import psycopg2
-from psycopg2.extras import RealDictCursor
-import time
+from fastapi import FastAPI, Response, status, HTTPException, Depends,APIRouter
+from .. import models, schema ,utils
+from ..database import engine, get_db
 from sqlalchemy.orm import Session
-from . import models, schema ,utils
-from .database import engine, get_db
 
-
-# ==================================================
-# Create Database Tables
-# ==================================================
-
-models.Base.metadata.create_all(bind=engine)
-
-# ==================================================
-# Initialize FastAPI Application
-# ==================================================
-
-app = FastAPI()
-
-
-# ==================================================
-# Database Connection
-# ==================================================
-
-while True:
-    try:
-        conn = psycopg2.connect(
-            host="localhost",
-            database="fastapi",
-            user="postgres",
-            password="Aakash123",
-            cursor_factory=RealDictCursor,
-        )
-        cursor = conn.cursor()
-        print("Database connected successfully")
-        break
-
-    except Exception as error:
-        print("Error while connecting to database", error)
-        time.sleep(2)  # Retry after 2 seconds
-
-
-# ==================================================
-# Root Endpoint
-# ==================================================
-
-@app.get("/")  # Root endpoint
-def read_root():
-    return {"Hello": "World"}
+router=APIRouter()
 
 
 # ==================================================
 # Get All Posts
 # ==================================================
 
-@app.get("/post")  # Fetch all posts
+@router.get("/post")  # Fetch all posts
 def get_posts(db: Session = Depends(get_db)):
     posts = db.query(models.Post).all()
     return posts
@@ -74,7 +22,7 @@ def get_posts(db: Session = Depends(get_db)):
 # Create New Post
 # ==================================================
 
-@app.post("/CreatePost", response_model=schema.Post)  # Create a new post
+@router.post("/CreatePost", response_model=schema.Post)  # Create a new post
 def create_post(Post: schema.PostCreate, db: Session = Depends(get_db)):
     # cursor.execute(
     #     "INSERT INTO posts (title, content, published) VALUES (%s, %s, %s) RETURNING *",
@@ -99,7 +47,7 @@ def create_post(Post: schema.PostCreate, db: Session = Depends(get_db)):
 # Get Post By ID
 # ==================================================
 
-@app.get("/post/{ID}",response_model=schema.Post   )  # Fetch a post by its ID
+@router.get("/post/{ID}",response_model=schema.Post   )  # Fetch a post by its ID
 def get_post(ID: int, db: Session = Depends(get_db)):
     # cursor.execute("SELECT * FROM posts WHERE id = %s returning *", (str(ID),))
     # post = cursor.fetchone()
@@ -122,7 +70,7 @@ def get_post(ID: int, db: Session = Depends(get_db)):
 # Delete Post
 # ==================================================
 
-@app.delete("/post/{ID}")  # Delete a post by its ID
+@router.delete("/post/{ID}")  # Delete a post by its ID
 def delete_post(ID: int, db: Session = Depends(get_db)):
 
     deleted_post = db.query(models.Post).filter(models.Post.id == ID).first()
@@ -143,7 +91,7 @@ def delete_post(ID: int, db: Session = Depends(get_db)):
 # Update Post
 # ==================================================
 
-@app.put("/post/{ID}",response_model=schema.Post)  # Update an existing post by its ID
+@router.put("/post/{ID}",response_model=schema.Post)  # Update an existing post by its ID
 def update_post(ID: int, updated_post: schema.PostCreate, db: Session = Depends(get_db)):
     # cursor.execute(
     #     "UPDATE posts SET title = %s, content = %s, published = %s WHERE id = %s returning *",
@@ -167,22 +115,3 @@ def update_post(ID: int, updated_post: schema.PostCreate, db: Session = Depends(
     db.refresh(post)
 
     return  post
-
-
-
-@app.post("/users",status_code=status.HTTP_201_CREATED,response_model=schema.UserOut)
-def Create_user(user:schema.User,db:Session=Depends(get_db)):
-
-    user.password=utils.hash(user.password)   
-    new_user=models.User(**user.dict())
-    db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
-    return new_user
-
-@app.get("/users/{ID}",response_model=schema.UserOut)
-def get_user(ID:int,db:Session=Depends(get_db)):
-    user=db.query(models.User).filter(models.User.id==ID).first()
-    if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=f"User with ID {ID} not found")
-    return user
