@@ -1,17 +1,20 @@
 from fastapi import FastAPI, Response, status, HTTPException, Depends,APIRouter
-from .. import models, schema ,utils
+from .. import models, schema ,utils,oauth
 from ..database import engine, get_db
 from sqlalchemy.orm import Session
 
-router=APIRouter()
+router=APIRouter(
+    prefix="/post",
+    tags=["Post"]
+)
 
 
 # ==================================================
 # Get All Posts
 # ==================================================
 
-@router.get("/post")  # Fetch all posts
-def get_posts(db: Session = Depends(get_db)):
+@router.get("/")  # Fetch all posts
+def get_posts(db: Session = Depends(get_db),current_user: int = Depends(oauth.get_current_user)):
     posts = db.query(models.Post).all()
     return posts
 
@@ -23,7 +26,7 @@ def get_posts(db: Session = Depends(get_db)):
 # ==================================================
 
 @router.post("/CreatePost", response_model=schema.Post)  # Create a new post
-def create_post(Post: schema.PostCreate, db: Session = Depends(get_db)):
+def create_post(Post: schema.PostCreate, db: Session = Depends(get_db),current_user: int = Depends(oauth.get_current_user)):
     # cursor.execute(
     #     "INSERT INTO posts (title, content, published) VALUES (%s, %s, %s) RETURNING *",
     #     (new_post.title, new_post.content, new_post.published),
@@ -31,6 +34,7 @@ def create_post(Post: schema.PostCreate, db: Session = Depends(get_db)):
 
     # new_post = cursor.fetchone()
     # conn.commit()
+    print(current_user.email)
 
     new_post = models.Post(**Post.dict())
     db.add(new_post)
@@ -47,8 +51,8 @@ def create_post(Post: schema.PostCreate, db: Session = Depends(get_db)):
 # Get Post By ID
 # ==================================================
 
-@router.get("/post/{ID}",response_model=schema.Post   )  # Fetch a post by its ID
-def get_post(ID: int, db: Session = Depends(get_db)):
+@router.get("/{ID}",response_model=schema.Post   )  # Fetch a post by its ID
+def get_post(ID: int, db: Session = Depends(get_db),current_user: int = Depends(oauth.get_current_user)):
     # cursor.execute("SELECT * FROM posts WHERE id = %s returning *", (str(ID),))
     # post = cursor.fetchone()
 
@@ -70,8 +74,8 @@ def get_post(ID: int, db: Session = Depends(get_db)):
 # Delete Post
 # ==================================================
 
-@router.delete("/post/{ID}")  # Delete a post by its ID
-def delete_post(ID: int, db: Session = Depends(get_db)):
+@router.delete("/{ID}")  # Delete a post by its ID
+def delete_post(ID: int, db: Session = Depends(get_db),current_user: int = Depends(oauth.get_current_user)):
 
     deleted_post = db.query(models.Post).filter(models.Post.id == ID).first()
 
@@ -91,8 +95,8 @@ def delete_post(ID: int, db: Session = Depends(get_db)):
 # Update Post
 # ==================================================
 
-@router.put("/post/{ID}",response_model=schema.Post)  # Update an existing post by its ID
-def update_post(ID: int, updated_post: schema.PostCreate, db: Session = Depends(get_db)):
+@router.put("/{ID}",response_model=schema.Post)  # Update an existing post by its ID
+def update_post(ID: int, updated_post: schema.PostCreate, db: Session = Depends(get_db),current_user: int = Depends(oauth.get_current_user)):
     # cursor.execute(
     #     "UPDATE posts SET title = %s, content = %s, published = %s WHERE id = %s returning *",
     #     (updated_post.title, updated_post.content, updated_post.published, str(ID))
